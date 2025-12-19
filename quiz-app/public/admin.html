@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pub Quiz - Admin Panel</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #1a1a2e;
+      min-height: 100vh;
+      color: white;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    header h1 {
+      font-size: 1.8rem;
+      color: #e94560;
+    }
+
+    .reset-btn {
+      padding: 10px 20px;
+      background: #e94560;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    .reset-btn:hover {
+      background: #d63050;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+    }
+
+    @media (max-width: 900px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 25px;
+    }
+
+    .panel h2 {
+      font-size: 1.3rem;
+      color: #a8dadc;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .control-row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      padding: 15px 25px;
+      font-size: 1.1rem;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      flex: 1;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #4ecdc4 0%, #45b7aa 100%);
+      color: white;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+
+    .btn-warning {
+      background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+      color: white;
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+      color: white;
+    }
+
+    .current-question {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .question-number {
+      font-size: 0.9rem;
+      color: #a8dadc;
+      margin-bottom: 10px;
+    }
+
+    .question-text {
+      font-size: 1.2rem;
+      margin-bottom: 15px;
+    }
+
+    .answer-text {
+      color: #4ecdc4;
+      font-size: 1.1rem;
+      padding: 10px;
+      background: rgba(78, 205, 196, 0.1);
+      border-radius: 5px;
+    }
+
+    .player-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 10px;
+    }
+
+    .player-info {
+      flex: 1;
+    }
+
+    .player-name {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .player-answer {
+      font-size: 0.9rem;
+      color: #a8dadc;
+    }
+
+    .score-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .score-btn {
+      width: 35px;
+      height: 35px;
+      border: none;
+      border-radius: 50%;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-btn.minus {
+      background: #e94560;
+      color: white;
+    }
+
+    .score-btn.plus {
+      background: #4ecdc4;
+      color: white;
+    }
+
+    .score-display {
+      font-size: 1.2rem;
+      font-weight: bold;
+      min-width: 50px;
+      text-align: center;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 10px;
+    }
+
+    .status-indicator.waiting {
+      background: #f39c12;
+    }
+
+    .status-indicator.active {
+      background: #27ae60;
+    }
+
+    .status-indicator.finished {
+      background: #e94560;
+    }
+
+    .waiting-message {
+      text-align: center;
+      padding: 40px;
+      color: #a8dadc;
+    }
+
+    .waiting-message h3 {
+      font-size: 1.5rem;
+      margin-bottom: 10px;
+    }
+
+    .questions-overview {
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .question-item {
+      padding: 12px 15px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .question-item:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .question-item.current {
+      background: rgba(78, 205, 196, 0.2);
+      border: 1px solid #4ecdc4;
+    }
+
+    .question-item .q-num {
+      color: #a8dadc;
+      font-size: 0.9rem;
+    }
+
+    .question-item .q-text {
+      margin-top: 5px;
+      font-size: 0.95rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Quiz Admin Panel</h1>
+      <button class="reset-btn" onclick="resetQuiz()">Reset Quiz</button>
+    </header>
+
+    <div class="main-grid">
+      <div class="panel">
+        <h2>
+          <span class="status-indicator" id="statusIndicator"></span>
+          Quiz Besturing
+        </h2>
+
+        <div id="controlArea">
+          <!-- Controls injected by JS -->
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Spelers & Scores</h2>
+        <div class="player-list" id="playerList">
+          <!-- Players injected by JS -->
+        </div>
+      </div>
+
+      <div class="panel" style="grid-column: span 2;">
+        <h2>Alle Vragen</h2>
+        <div class="questions-overview" id="questionsOverview">
+          <!-- Questions injected by JS -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentState = null;
+    let players = [];
+    let questions = [];
+
+    // Load questions
+    fetch('/api/questions')
+      .then(res => res.json())
+      .then(data => {
+        questions = data;
+        renderQuestionsOverview();
+      });
+
+    socket.on('gameState', (state) => {
+      currentState = state;
+      renderControls();
+      renderQuestionsOverview();
+      updateStatusIndicator();
+    });
+
+    socket.on('playerUpdate', (playerData) => {
+      players = playerData;
+      renderPlayers();
+    });
+
+    function updateStatusIndicator() {
+      const indicator = document.getElementById('statusIndicator');
+      if (!currentState || !currentState.quizStarted) {
+        indicator.className = 'status-indicator waiting';
+      } else if (currentState.currentQuestionIndex >= currentState.totalQuestions - 1 && currentState.showAnswer) {
+        indicator.className = 'status-indicator finished';
+      } else {
+        indicator.className = 'status-indicator active';
+      }
+    }
+
+    function renderControls() {
+      const controlArea = document.getElementById('controlArea');
+
+      if (!currentState || !currentState.quizStarted) {
+        controlArea.innerHTML = `
+          <div class="waiting-message">
+            <h3>Quiz nog niet gestart</h3>
+            <p>${players.length} speler(s) aangemeld</p>
+          </div>
+          <button class="btn btn-success" onclick="startQuiz()">
+            Start Quiz
+          </button>
+        `;
+        return;
+      }
+
+      const question = currentState.currentQuestion;
+      const isLastQuestion = currentState.currentQuestionIndex >= currentState.totalQuestions - 1;
+
+      controlArea.innerHTML = `
+        <div class="current-question">
+          <div class="question-number">Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.totalQuestions}</div>
+          <div class="question-text">${question ? question.question : 'Geen vraag'}</div>
+          <div class="answer-text">Antwoord: ${question?.answer || '-'}</div>
+        </div>
+
+        <div class="controls">
+          <div class="control-row">
+            <button class="btn btn-secondary" onclick="prevQuestion()" ${currentState.currentQuestionIndex <= 0 ? 'disabled' : ''}>
+              ← Vorige
+            </button>
+            <button class="btn btn-secondary" onclick="nextQuestion()" ${isLastQuestion ? 'disabled' : ''}>
+              Volgende →
+            </button>
+          </div>
+
+          <button class="btn ${currentState.showAnswer ? 'btn-warning' : 'btn-primary'}" onclick="toggleAnswer()">
+            ${currentState.showAnswer ? 'Verberg Antwoord' : 'Toon Antwoord'}
+          </button>
+        </div>
+      `;
+    }
+
+    function renderPlayers() {
+      const playerList = document.getElementById('playerList');
+      const currentQuestionId = currentState?.currentQuestion?.id;
+
+      if (players.length === 0) {
+        playerList.innerHTML = '<p style="color: #a8dadc; text-align: center; padding: 20px;">Nog geen spelers</p>';
+        return;
+      }
+
+      playerList.innerHTML = players.map(player => `
+        <div class="player-item">
+          <div class="player-info">
+            <div class="player-name">${player.name}</div>
+            <div class="player-answer">
+              Antwoord: ${player.currentAnswer || '-'}
+            </div>
+          </div>
+          <div class="score-controls">
+            <button class="score-btn minus" onclick="updateScore('${player.name}', ${player.score - 1})">-</button>
+            <span class="score-display">${player.score}</span>
+            <button class="score-btn plus" onclick="updateScore('${player.name}', ${player.score + 1})">+</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderQuestionsOverview() {
+      const overview = document.getElementById('questionsOverview');
+      const currentIndex = currentState?.currentQuestionIndex ?? -1;
+
+      overview.innerHTML = questions.map((q, index) => `
+        <div class="question-item ${index === currentIndex ? 'current' : ''}">
+          <div class="q-num">Vraag ${index + 1}</div>
+          <div class="q-text">${q.question}</div>
+        </div>
+      `).join('');
+    }
+
+    function startQuiz() {
+      socket.emit('startQuiz');
+    }
+
+    function nextQuestion() {
+      socket.emit('nextQuestion');
+    }
+
+    function prevQuestion() {
+      socket.emit('prevQuestion');
+    }
+
+    function toggleAnswer() {
+      socket.emit('toggleAnswer');
+    }
+
+    function updateScore(playerName, score) {
+      socket.emit('updateScore', { playerName, score });
+    }
+
+    function resetQuiz() {
+      if (confirm('Weet je zeker dat je de quiz wilt resetten? Alle scores worden gewist.')) {
+        socket.emit('resetQuiz');
+      }
+    }
+
+    // Initial render
+    renderControls();
+    renderPlayers();
+  </script>
+</body>
+</html>

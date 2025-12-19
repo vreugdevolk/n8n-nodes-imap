@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pub Quiz - De Frankrijker</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+      min-height: 100vh;
+      color: white;
+      overflow: hidden;
+    }
+
+    .container {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      padding: 40px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    header h1 {
+      font-size: 3rem;
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .question-number {
+      font-size: 1.5rem;
+      color: #a8dadc;
+      margin-top: 10px;
+    }
+
+    .main-content {
+      flex: 1;
+      display: flex;
+      gap: 40px;
+    }
+
+    .question-area {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .question-card {
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 60px;
+      width: 100%;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .question-text {
+      font-size: 3rem;
+      line-height: 1.4;
+      margin-bottom: 40px;
+    }
+
+    .answer-text {
+      font-size: 2.5rem;
+      color: #4ecdc4;
+      padding: 30px;
+      background: rgba(78, 205, 196, 0.1);
+      border-radius: 15px;
+      border: 2px solid #4ecdc4;
+      animation: fadeIn 0.5s ease;
+    }
+
+    .answer-hidden {
+      font-size: 1.5rem;
+      color: #888;
+      font-style: italic;
+    }
+
+    .waiting-screen {
+      text-align: center;
+    }
+
+    .waiting-screen h2 {
+      font-size: 4rem;
+      margin-bottom: 30px;
+      animation: pulse 2s infinite;
+    }
+
+    .waiting-screen p {
+      font-size: 1.8rem;
+      color: #a8dadc;
+    }
+
+    .join-url {
+      font-size: 2.5rem;
+      color: #4ecdc4;
+      margin-top: 40px;
+      padding: 20px 40px;
+      background: rgba(78, 205, 196, 0.1);
+      border-radius: 10px;
+      display: inline-block;
+    }
+
+    .players-area {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 20px;
+      padding: 30px;
+      overflow-y: auto;
+    }
+
+    .players-area h3 {
+      font-size: 1.5rem;
+      margin-bottom: 20px;
+      color: #a8dadc;
+      text-align: center;
+    }
+
+    .player-list {
+      list-style: none;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 20px;
+      margin-bottom: 10px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      font-size: 1.2rem;
+    }
+
+    .player-name {
+      font-weight: bold;
+    }
+
+    .player-score {
+      color: #4ecdc4;
+      font-weight: bold;
+    }
+
+    .player-answered {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #666;
+      margin-left: 10px;
+    }
+
+    .player-answered.submitted {
+      background: #4ecdc4;
+      animation: pulse 1s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .finished-screen {
+      text-align: center;
+    }
+
+    .finished-screen h2 {
+      font-size: 4rem;
+      margin-bottom: 50px;
+      color: #e94560;
+    }
+
+    .final-scores {
+      display: flex;
+      justify-content: center;
+      gap: 40px;
+      flex-wrap: wrap;
+    }
+
+    .score-card {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 30px 50px;
+      border-radius: 15px;
+      text-align: center;
+    }
+
+    .score-card.first {
+      background: linear-gradient(135deg, #ffd700 0%, #ffed4a 100%);
+      color: #1a1a2e;
+      transform: scale(1.1);
+    }
+
+    .score-card .rank {
+      font-size: 2rem;
+      margin-bottom: 10px;
+    }
+
+    .score-card .name {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .score-card .points {
+      font-size: 2.5rem;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Pub Quiz</h1>
+      <div class="question-number" id="questionNumber"></div>
+    </header>
+
+    <div class="main-content">
+      <div class="question-area" id="questionArea">
+        <!-- Content injected by JS -->
+      </div>
+
+      <div class="players-area">
+        <h3>Spelers</h3>
+        <ul class="player-list" id="playerList">
+          <!-- Players injected by JS -->
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    let currentState = null;
+    let players = [];
+
+    socket.on('gameState', (state) => {
+      currentState = state;
+      renderQuiz();
+    });
+
+    socket.on('playerList', (list) => {
+      // Used for initial load
+    });
+
+    socket.on('playerUpdate', (playerData) => {
+      players = playerData;
+      renderPlayers();
+    });
+
+    socket.on('answerSubmitted', ({ playerName }) => {
+      // Flash effect could be added here
+    });
+
+    function renderQuiz() {
+      const questionArea = document.getElementById('questionArea');
+      const questionNumber = document.getElementById('questionNumber');
+
+      if (!currentState || !currentState.quizStarted) {
+        questionNumber.textContent = '';
+        questionArea.innerHTML = `
+          <div class="waiting-screen">
+            <h2>Welkom bij de Pub Quiz!</h2>
+            <p>Doe mee op je telefoon:</p>
+            <div class="join-url">${window.location.origin}/quiz/jouwnaam</div>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState.currentQuestionIndex >= currentState.totalQuestions) {
+        renderFinished();
+        return;
+      }
+
+      if (currentState.currentQuestion) {
+        questionNumber.textContent = `Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.totalQuestions}`;
+
+        let answerHtml = '';
+        if (currentState.showAnswer && currentState.currentQuestion.answer) {
+          answerHtml = `<div class="answer-text">${currentState.currentQuestion.answer}</div>`;
+        } else {
+          answerHtml = `<div class="answer-hidden">Antwoord verborgen</div>`;
+        }
+
+        questionArea.innerHTML = `
+          <div class="question-card">
+            <div class="question-text">${currentState.currentQuestion.question}</div>
+            ${answerHtml}
+          </div>
+        `;
+      }
+    }
+
+    function renderFinished() {
+      const questionArea = document.getElementById('questionArea');
+      const sortedPlayers = [...players].sort((a, b) => b.score - a.score);
+
+      let scoresHtml = sortedPlayers.slice(0, 5).map((player, index) => `
+        <div class="score-card ${index === 0 ? 'first' : ''}">
+          <div class="rank">#${index + 1}</div>
+          <div class="name">${player.name}</div>
+          <div class="points">${player.score} pts</div>
+        </div>
+      `).join('');
+
+      questionArea.innerHTML = `
+        <div class="finished-screen">
+          <h2>Quiz Afgelopen!</h2>
+          <div class="final-scores">${scoresHtml}</div>
+        </div>
+      `;
+    }
+
+    function renderPlayers() {
+      const playerList = document.getElementById('playerList');
+      const currentQuestionId = currentState?.currentQuestion?.id;
+
+      playerList.innerHTML = players.map(player => {
+        const hasAnswered = player.currentAnswer !== undefined && player.currentAnswer !== null;
+        return `
+          <li class="player-item">
+            <span class="player-name">${player.name}</span>
+            <span>
+              <span class="player-score">${player.score} pts</span>
+              <span class="player-answered ${hasAnswered ? 'submitted' : ''}"></span>
+            </span>
+          </li>
+        `;
+      }).join('');
+    }
+
+    // Initial render
+    renderQuiz();
+  </script>
+</body>
+</html>

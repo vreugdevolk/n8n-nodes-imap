@@ -1,0 +1,52 @@
+[
+  {
+    "id": 1,
+    "question": "Wat is de hoofdstad van Nederland?",
+    "answer": "Amsterdam"
+  },
+  {
+    "id": 2,
+    "question": "In welk jaar vond de Watersnoodramp plaats?",
+    "answer": "1953"
+  },
+  {
+    "id": 3,
+    "question": "Hoeveel provincies heeft Nederland?",
+    "answer": "12"
+  },
+  {
+    "id": 4,
+    "question": "Welke Nederlandse schilder maakte 'De Nachtwacht'?",
+    "answer": "Rembrandt"
+  },
+  {
+    "id": 5,
+    "question": "Wat is de langste rivier van Nederland?",
+    "answer": "De Rijn"
+  },
+  {
+    "id": 6,
+    "question": "In welke stad staat de Euromast?",
+    "answer": "Rotterdam"
+  },
+  {
+    "id": 7,
+    "question": "Hoeveel letters heeft het Nederlandse alfabet?",
+    "answer": "26"
+  },
+  {
+    "id": 8,
+    "question": "Welke Nederlandse voetballer won de Gouden Bal in 1988?",
+    "answer": "Marco van Basten"
+  },
+  {
+    "id": 9,
+    "question": "Wat is de nationale bloem van Nederland?",
+    "answer": "Tulp"
+  },
+  {
+    "id": 10,
+    "question": "In welk jaar werd de Euro ingevoerd in Nederland?",
+    "answer": "2002"
+  }
+]
