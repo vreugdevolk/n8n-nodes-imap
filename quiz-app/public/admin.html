@@ -20,7 +20,7 @@
     }
 
     .container {
-      max-width: 1200px;
+      max-width: 1400px;
       margin: 0 auto;
     }
 
@@ -28,14 +28,19 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     header h1 {
-      font-size: 1.8rem;
+      font-size: 1.6rem;
       color: #e94560;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
     }
 
     .reset-btn {
@@ -45,20 +50,22 @@
       border-radius: 5px;
       color: white;
       cursor: pointer;
-      font-size: 1rem;
-    }
-
-    .reset-btn:hover {
-      background: #d63050;
+      font-size: 0.9rem;
     }
 
     .main-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
     }
 
-    @media (max-width: 900px) {
+    @media (max-width: 1200px) {
+      .main-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 800px) {
       .main-grid {
         grid-template-columns: 1fr;
       }
@@ -66,42 +73,65 @@
 
     .panel {
       background: rgba(255, 255, 255, 0.05);
-      border-radius: 15px;
-      padding: 25px;
+      border-radius: 12px;
+      padding: 20px;
     }
 
     .panel h2 {
-      font-size: 1.3rem;
+      font-size: 1.1rem;
       color: #a8dadc;
-      margin-bottom: 20px;
+      margin-bottom: 15px;
       padding-bottom: 10px;
       border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .category-badge {
+      display: inline-block;
+      padding: 4px 12px;
+      background: linear-gradient(135deg, #4ecdc4 0%, #45b7aa 100%);
+      border-radius: 15px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      color: white;
+    }
+
+    .skip-badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: rgba(233, 69, 96, 0.3);
+      border: 1px solid #e94560;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      color: #e94560;
     }
 
     .controls {
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 12px;
     }
 
     .control-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
     }
 
     .btn {
-      padding: 15px 25px;
-      font-size: 1.1rem;
+      padding: 12px 20px;
+      font-size: 1rem;
       font-weight: bold;
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.2s, box-shadow 0.2s;
+      transition: transform 0.2s;
       flex: 1;
     }
 
     .btn:hover {
-      transform: translateY(-2px);
+      transform: translateY(-1px);
     }
 
     .btn:disabled {
@@ -130,34 +160,39 @@
       color: white;
     }
 
-    .current-question {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 20px;
+    .btn-danger {
+      background: linear-gradient(135deg, #e94560 0%, #d63050 100%);
+      color: white;
     }
 
-    .question-number {
-      font-size: 0.9rem;
+    .current-question {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+
+    .question-meta {
+      font-size: 0.85rem;
       color: #a8dadc;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     .question-text {
-      font-size: 1.2rem;
-      margin-bottom: 15px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
     }
 
     .answer-text {
       color: #4ecdc4;
-      font-size: 1.1rem;
+      font-size: 1rem;
       padding: 10px;
       background: rgba(78, 205, 196, 0.1);
       border-radius: 5px;
     }
 
     .player-list {
-      max-height: 400px;
+      max-height: 350px;
       overflow-y: auto;
     }
 
@@ -165,10 +200,19 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px;
+      padding: 12px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
+    }
+
+    .player-item.has-bet {
+      border: 2px solid #f39c12;
+      background: rgba(243, 156, 18, 0.1);
+    }
+
+    .player-item.voted-skip {
+      border-left: 3px solid #e94560;
     }
 
     .player-info {
@@ -177,26 +221,45 @@
 
     .player-name {
       font-weight: bold;
-      margin-bottom: 5px;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bet-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      background: #f39c12;
+      border-radius: 4px;
+      color: white;
+    }
+
+    .skip-vote-badge {
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      background: #e94560;
+      border-radius: 4px;
+      color: white;
     }
 
     .player-answer {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: #a8dadc;
     }
 
     .score-controls {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 6px;
     }
 
     .score-btn {
-      width: 35px;
-      height: 35px;
+      width: 32px;
+      height: 32px;
       border: none;
       border-radius: 50%;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -214,74 +277,124 @@
     }
 
     .score-display {
-      font-size: 1.2rem;
+      font-size: 1.1rem;
       font-weight: bold;
-      min-width: 50px;
+      min-width: 45px;
       text-align: center;
-    }
-
-    .status-indicator {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      margin-right: 10px;
-    }
-
-    .status-indicator.waiting {
-      background: #f39c12;
-    }
-
-    .status-indicator.active {
-      background: #27ae60;
-    }
-
-    .status-indicator.finished {
-      background: #e94560;
     }
 
     .waiting-message {
       text-align: center;
-      padding: 40px;
+      padding: 30px;
       color: #a8dadc;
     }
 
     .waiting-message h3 {
-      font-size: 1.5rem;
+      font-size: 1.3rem;
       margin-bottom: 10px;
     }
 
-    .questions-overview {
+    .categories-list {
       max-height: 300px;
       overflow-y: auto;
     }
 
-    .question-item {
-      padding: 12px 15px;
+    .category-item {
+      padding: 10px 12px;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 8px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       cursor: pointer;
       transition: background 0.2s;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
 
-    .question-item:hover {
+    .category-item:hover {
       background: rgba(255, 255, 255, 0.1);
     }
 
-    .question-item.current {
+    .category-item.current {
       background: rgba(78, 205, 196, 0.2);
       border: 1px solid #4ecdc4;
     }
 
-    .question-item .q-num {
-      color: #a8dadc;
-      font-size: 0.9rem;
+    .category-item.completed {
+      opacity: 0.6;
     }
 
-    .question-item .q-text {
-      margin-top: 5px;
-      font-size: 0.95rem;
+    .category-item .name {
+      font-weight: bold;
+    }
+
+    .category-item .count {
+      font-size: 0.85rem;
+      color: #a8dadc;
+    }
+
+    .skip-status {
+      background: rgba(233, 69, 96, 0.1);
+      border: 1px solid rgba(233, 69, 96, 0.3);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+
+    .skip-status .label {
+      font-size: 0.85rem;
+      color: #e94560;
+      margin-bottom: 8px;
+    }
+
+    .skip-progress {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .skip-progress .bar {
+      flex: 1;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .skip-progress .bar .fill {
+      height: 100%;
+      background: #e94560;
+      transition: width 0.3s;
+    }
+
+    .skip-progress .count {
+      font-size: 0.9rem;
+      font-weight: bold;
+      color: #e94560;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .quick-btn {
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    .quick-btn.correct {
+      background: #27ae60;
+      color: white;
+    }
+
+    .quick-btn.wrong {
+      background: #e94560;
+      color: white;
     }
   </style>
 </head>
@@ -289,33 +402,30 @@
   <div class="container">
     <header>
       <h1>Quiz Admin Panel</h1>
-      <button class="reset-btn" onclick="resetQuiz()">Reset Quiz</button>
+      <div class="header-actions">
+        <button class="reset-btn" onclick="resetQuiz()">Reset Quiz</button>
+      </div>
     </header>
 
     <div class="main-grid">
       <div class="panel">
         <h2>
-          <span class="status-indicator" id="statusIndicator"></span>
           Quiz Besturing
+          <span class="category-badge" id="currentCategoryBadge" style="display: none;"></span>
         </h2>
 
-        <div id="controlArea">
-          <!-- Controls injected by JS -->
-        </div>
+        <div id="skipStatus" style="display: none;"></div>
+        <div id="controlArea"></div>
       </div>
 
       <div class="panel">
         <h2>Spelers & Scores</h2>
-        <div class="player-list" id="playerList">
-          <!-- Players injected by JS -->
-        </div>
+        <div class="player-list" id="playerList"></div>
       </div>
 
-      <div class="panel" style="grid-column: span 2;">
-        <h2>Alle Vragen</h2>
-        <div class="questions-overview" id="questionsOverview">
-          <!-- Questions injected by JS -->
-        </div>
+      <div class="panel">
+        <h2>Categorieën</h2>
+        <div class="categories-list" id="categoriesList"></div>
       </div>
     </div>
   </div>
@@ -325,21 +435,21 @@
     const socket = io();
     let currentState = null;
     let players = [];
-    let questions = [];
+    let categories = [];
+    let skipVoteStatus = { skipVoteCount: 0, totalPlayers: 0, votesNeeded: 1 };
 
-    // Load questions
-    fetch('/api/questions')
+    // Load categories
+    fetch('/api/categories')
       .then(res => res.json())
       .then(data => {
-        questions = data;
-        renderQuestionsOverview();
+        categories = data;
+        renderCategories();
       });
 
     socket.on('gameState', (state) => {
       currentState = state;
       renderControls();
-      renderQuestionsOverview();
-      updateStatusIndicator();
+      renderCategories();
     });
 
     socket.on('playerUpdate', (playerData) => {
@@ -347,96 +457,168 @@
       renderPlayers();
     });
 
-    function updateStatusIndicator() {
-      const indicator = document.getElementById('statusIndicator');
-      if (!currentState || !currentState.quizStarted) {
-        indicator.className = 'status-indicator waiting';
-      } else if (currentState.currentQuestionIndex >= currentState.totalQuestions - 1 && currentState.showAnswer) {
-        indicator.className = 'status-indicator finished';
-      } else {
-        indicator.className = 'status-indicator active';
+    socket.on('skipVoteUpdate', (status) => {
+      skipVoteStatus = status;
+      renderSkipStatus();
+    });
+
+    function renderSkipStatus() {
+      const skipStatus = document.getElementById('skipStatus');
+
+      if (!currentState || !currentState.quizStarted || currentState.isFinished || skipVoteStatus.totalPlayers === 0) {
+        skipStatus.style.display = 'none';
+        return;
       }
+
+      const percentage = (skipVoteStatus.skipVoteCount / skipVoteStatus.votesNeeded) * 100;
+
+      skipStatus.style.display = 'block';
+      skipStatus.innerHTML = `
+        <div class="skip-status">
+          <div class="label">Skip Categorie Stemmen (${skipVoteStatus.voters?.join(', ') || 'niemand'})</div>
+          <div class="skip-progress">
+            <div class="bar">
+              <div class="fill" style="width: ${Math.min(percentage, 100)}%"></div>
+            </div>
+            <div class="count">${skipVoteStatus.skipVoteCount}/${skipVoteStatus.votesNeeded}</div>
+          </div>
+        </div>
+      `;
     }
 
     function renderControls() {
       const controlArea = document.getElementById('controlArea');
+      const categoryBadge = document.getElementById('currentCategoryBadge');
 
       if (!currentState || !currentState.quizStarted) {
+        categoryBadge.style.display = 'none';
         controlArea.innerHTML = `
           <div class="waiting-message">
             <h3>Quiz nog niet gestart</h3>
             <p>${players.length} speler(s) aangemeld</p>
           </div>
-          <button class="btn btn-success" onclick="startQuiz()">
+          <button class="btn btn-success" onclick="startQuiz()" style="width: 100%;">
             Start Quiz
           </button>
         `;
         return;
       }
 
+      if (currentState.isFinished) {
+        categoryBadge.style.display = 'none';
+        controlArea.innerHTML = `
+          <div class="waiting-message">
+            <h3>Quiz Afgelopen!</h3>
+            <p>Bekijk de eindstand op het grote scherm</p>
+          </div>
+        `;
+        return;
+      }
+
+      if (currentState.currentCategory) {
+        categoryBadge.style.display = 'inline-block';
+        categoryBadge.textContent = currentState.currentCategory.name;
+      }
+
       const question = currentState.currentQuestion;
-      const isLastQuestion = currentState.currentQuestionIndex >= currentState.totalQuestions - 1;
+      const isLastQuestion = currentState.currentQuestionIndex >= currentState.currentCategory.questionCount - 1;
+      const isLastCategory = currentState.currentCategoryIndex >= currentState.totalCategories - 1;
 
       controlArea.innerHTML = `
         <div class="current-question">
-          <div class="question-number">Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.totalQuestions}</div>
-          <div class="question-text">${question ? question.question : 'Geen vraag'}</div>
+          <div class="question-meta">
+            Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.currentCategory.questionCount} |
+            Categorie ${currentState.currentCategoryIndex + 1} van ${currentState.totalCategories}
+          </div>
+          <div class="question-text">${question ? question.question : '-'}</div>
           <div class="answer-text">Antwoord: ${question?.answer || '-'}</div>
         </div>
 
         <div class="controls">
           <div class="control-row">
             <button class="btn btn-secondary" onclick="prevQuestion()" ${currentState.currentQuestionIndex <= 0 ? 'disabled' : ''}>
-              ← Vorige
+              Vorige
             </button>
-            <button class="btn btn-secondary" onclick="nextQuestion()" ${isLastQuestion ? 'disabled' : ''}>
-              Volgende →
+            <button class="btn btn-secondary" onclick="nextQuestion()">
+              ${isLastQuestion ? (isLastCategory ? 'Einde' : 'Volgende Cat.') : 'Volgende'}
             </button>
           </div>
 
           <button class="btn ${currentState.showAnswer ? 'btn-warning' : 'btn-primary'}" onclick="toggleAnswer()">
             ${currentState.showAnswer ? 'Verberg Antwoord' : 'Toon Antwoord'}
           </button>
+
+          <button class="btn btn-danger" onclick="skipCategory()" ${isLastCategory ? 'disabled' : ''}>
+            Skip naar Volgende Categorie
+          </button>
         </div>
       `;
+
+      renderSkipStatus();
     }
 
     function renderPlayers() {
       const playerList = document.getElementById('playerList');
-      const currentQuestionId = currentState?.currentQuestion?.id;
 
       if (players.length === 0) {
         playerList.innerHTML = '<p style="color: #a8dadc; text-align: center; padding: 20px;">Nog geen spelers</p>';
         return;
       }
 
-      playerList.innerHTML = players.map(player => `
-        <div class="player-item">
-          <div class="player-info">
-            <div class="player-name">${player.name}</div>
-            <div class="player-answer">
-              Antwoord: ${player.currentAnswer || '-'}
+      const questionId = currentState?.currentQuestion?.id;
+
+      playerList.innerHTML = players.map(player => {
+        const hasBet = player.hasBetOnCurrent;
+        const hasVotedSkip = player.hasVotedSkip;
+
+        return `
+          <div class="player-item ${hasBet ? 'has-bet' : ''} ${hasVotedSkip ? 'voted-skip' : ''}">
+            <div class="player-info">
+              <div class="player-name">
+                ${player.name}
+                ${hasBet ? '<span class="bet-badge">2x</span>' : ''}
+                ${hasVotedSkip ? '<span class="skip-vote-badge">SKIP</span>' : ''}
+              </div>
+              <div class="player-answer">
+                Antwoord: ${player.currentAnswer || '-'}
+              </div>
+              ${hasBet && currentState?.showAnswer ? `
+                <div class="quick-actions">
+                  <button class="quick-btn correct" onclick="awardPoints('${player.name}', 1, ${questionId})">
+                    +1 (wordt 2)
+                  </button>
+                  <button class="quick-btn wrong" onclick="deductBetPoints('${player.name}', 1, ${questionId})">
+                    Fout (-1)
+                  </button>
+                </div>
+              ` : ''}
+            </div>
+            <div class="score-controls">
+              <button class="score-btn minus" onclick="updateScore('${player.name}', ${player.score - 1})">-</button>
+              <span class="score-display">${player.score}</span>
+              <button class="score-btn plus" onclick="updateScore('${player.name}', ${player.score + 1})">+</button>
             </div>
           </div>
-          <div class="score-controls">
-            <button class="score-btn minus" onclick="updateScore('${player.name}', ${player.score - 1})">-</button>
-            <span class="score-display">${player.score}</span>
-            <button class="score-btn plus" onclick="updateScore('${player.name}', ${player.score + 1})">+</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
     }
 
-    function renderQuestionsOverview() {
-      const overview = document.getElementById('questionsOverview');
-      const currentIndex = currentState?.currentQuestionIndex ?? -1;
+    function renderCategories() {
+      const list = document.getElementById('categoriesList');
+      const currentIndex = currentState?.currentCategoryIndex ?? -1;
 
-      overview.innerHTML = questions.map((q, index) => `
-        <div class="question-item ${index === currentIndex ? 'current' : ''}">
-          <div class="q-num">Vraag ${index + 1}</div>
-          <div class="q-text">${q.question}</div>
-        </div>
-      `).join('');
+      list.innerHTML = categories.map((cat, index) => {
+        let className = 'category-item';
+        if (index < currentIndex) className += ' completed';
+        if (index === currentIndex) className += ' current';
+
+        return `
+          <div class="${className}">
+            <span class="name">${index + 1}. ${cat.name}</span>
+            <span class="count">${cat.questionCount} vragen</span>
+          </div>
+        `;
+      }).join('');
     }
 
     function startQuiz() {
@@ -451,12 +633,24 @@
       socket.emit('prevQuestion');
     }
 
+    function skipCategory() {
+      socket.emit('nextCategory');
+    }
+
     function toggleAnswer() {
       socket.emit('toggleAnswer');
     }
 
     function updateScore(playerName, score) {
       socket.emit('updateScore', { playerName, score });
+    }
+
+    function awardPoints(playerName, points, questionId) {
+      socket.emit('awardPoints', { playerName, points, questionId });
+    }
+
+    function deductBetPoints(playerName, points, questionId) {
+      socket.emit('deductBetPoints', { playerName, points, questionId });
     }
 
     function resetQuiz() {

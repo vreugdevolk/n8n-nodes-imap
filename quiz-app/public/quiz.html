@@ -28,7 +28,7 @@
 
     header {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
     }
 
     header h1 {
@@ -41,8 +41,18 @@
       background-clip: text;
     }
 
-    .question-number {
+    .category-badge {
+      display: inline-block;
+      margin-top: 15px;
+      padding: 10px 30px;
+      background: linear-gradient(135deg, #4ecdc4 0%, #45b7aa 100%);
+      border-radius: 30px;
       font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .question-info {
+      font-size: 1.2rem;
       color: #a8dadc;
       margin-top: 10px;
     }
@@ -93,6 +103,52 @@
       font-style: italic;
     }
 
+    .skip-vote-bar {
+      margin-top: 30px;
+      padding: 15px 25px;
+      background: rgba(233, 69, 96, 0.2);
+      border-radius: 10px;
+      border: 1px solid rgba(233, 69, 96, 0.5);
+    }
+
+    .skip-vote-bar.active {
+      animation: pulse 1s infinite;
+    }
+
+    .skip-vote-label {
+      font-size: 1rem;
+      color: #e94560;
+      margin-bottom: 10px;
+    }
+
+    .skip-vote-progress {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .skip-vote-progress .bar {
+      flex: 1;
+      height: 20px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .skip-vote-progress .bar .fill {
+      height: 100%;
+      background: linear-gradient(90deg, #e94560, #ff6b6b);
+      transition: width 0.3s ease;
+    }
+
+    .skip-vote-progress .count {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #e94560;
+      min-width: 80px;
+      text-align: right;
+    }
+
     .waiting-screen {
       text-align: center;
     }
@@ -118,17 +174,24 @@
       display: inline-block;
     }
 
+    .sidebar {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
     .players-area {
       flex: 1;
       background: rgba(255, 255, 255, 0.05);
       border-radius: 20px;
-      padding: 30px;
+      padding: 25px;
       overflow-y: auto;
     }
 
     .players-area h3 {
-      font-size: 1.5rem;
-      margin-bottom: 20px;
+      font-size: 1.3rem;
+      margin-bottom: 15px;
       color: #a8dadc;
       text-align: center;
     }
@@ -141,15 +204,28 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 15px 20px;
-      margin-bottom: 10px;
+      padding: 12px 15px;
+      margin-bottom: 8px;
       background: rgba(255, 255, 255, 0.1);
       border-radius: 10px;
-      font-size: 1.2rem;
+      font-size: 1.1rem;
+    }
+
+    .player-item.has-bet {
+      border: 2px solid #f39c12;
+      background: rgba(243, 156, 18, 0.1);
     }
 
     .player-name {
       font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .bet-icon {
+      color: #f39c12;
+      font-size: 0.9rem;
     }
 
     .player-score {
@@ -157,17 +233,66 @@
       font-weight: bold;
     }
 
+    .player-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .player-answered {
       width: 12px;
       height: 12px;
       border-radius: 50%;
       background: #666;
-      margin-left: 10px;
     }
 
     .player-answered.submitted {
       background: #4ecdc4;
       animation: pulse 1s infinite;
+    }
+
+    .player-skip-vote {
+      font-size: 0.8rem;
+      color: #e94560;
+    }
+
+    .categories-overview {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 15px;
+      padding: 20px;
+    }
+
+    .categories-overview h3 {
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #a8dadc;
+    }
+
+    .category-dots {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .category-dot {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+
+    .category-dot.current {
+      background: #4ecdc4;
+      color: #1a1a2e;
+    }
+
+    .category-dot.completed {
+      background: rgba(78, 205, 196, 0.3);
     }
 
     @keyframes pulse {
@@ -230,7 +355,8 @@
   <div class="container">
     <header>
       <h1>Pub Quiz</h1>
-      <div class="question-number" id="questionNumber"></div>
+      <div class="category-badge" id="categoryBadge"></div>
+      <div class="question-info" id="questionInfo"></div>
     </header>
 
     <div class="main-content">
@@ -238,11 +364,20 @@
         <!-- Content injected by JS -->
       </div>
 
-      <div class="players-area">
-        <h3>Spelers</h3>
-        <ul class="player-list" id="playerList">
-          <!-- Players injected by JS -->
-        </ul>
+      <div class="sidebar">
+        <div class="players-area">
+          <h3>Spelers</h3>
+          <ul class="player-list" id="playerList">
+            <!-- Players injected by JS -->
+          </ul>
+        </div>
+
+        <div class="categories-overview">
+          <h3>Categorieën</h3>
+          <div class="category-dots" id="categoryDots">
+            <!-- Category dots injected by JS -->
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -252,14 +387,11 @@
     const socket = io();
     let currentState = null;
     let players = [];
+    let skipVoteStatus = { skipVoteCount: 0, totalPlayers: 0, votesNeeded: 1 };
 
     socket.on('gameState', (state) => {
       currentState = state;
       renderQuiz();
-    });
-
-    socket.on('playerList', (list) => {
-      // Used for initial load
     });
 
     socket.on('playerUpdate', (playerData) => {
@@ -267,16 +399,21 @@
       renderPlayers();
     });
 
-    socket.on('answerSubmitted', ({ playerName }) => {
-      // Flash effect could be added here
+    socket.on('skipVoteUpdate', (status) => {
+      skipVoteStatus = status;
+      renderSkipVotes();
     });
 
     function renderQuiz() {
       const questionArea = document.getElementById('questionArea');
-      const questionNumber = document.getElementById('questionNumber');
+      const categoryBadge = document.getElementById('categoryBadge');
+      const questionInfo = document.getElementById('questionInfo');
+
+      renderCategoryDots();
 
       if (!currentState || !currentState.quizStarted) {
-        questionNumber.textContent = '';
+        categoryBadge.style.display = 'none';
+        questionInfo.textContent = '';
         questionArea.innerHTML = `
           <div class="waiting-screen">
             <h2>Welkom bij de Pub Quiz!</h2>
@@ -287,13 +424,20 @@
         return;
       }
 
-      if (currentState.currentQuestionIndex >= currentState.totalQuestions) {
+      if (currentState.isFinished) {
+        categoryBadge.style.display = 'none';
+        questionInfo.textContent = '';
         renderFinished();
         return;
       }
 
+      if (currentState.currentCategory) {
+        categoryBadge.style.display = 'inline-block';
+        categoryBadge.textContent = currentState.currentCategory.name;
+      }
+
       if (currentState.currentQuestion) {
-        questionNumber.textContent = `Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.totalQuestions}`;
+        questionInfo.textContent = `Vraag ${currentState.currentQuestionIndex + 1} van ${currentState.currentCategory.questionCount} | Categorie ${currentState.currentCategoryIndex + 1} van ${currentState.totalCategories}`;
 
         let answerHtml = '';
         if (currentState.showAnswer && currentState.currentQuestion.answer) {
@@ -302,13 +446,62 @@
           answerHtml = `<div class="answer-hidden">Antwoord verborgen</div>`;
         }
 
+        const skipBarHtml = renderSkipVotesHtml();
+
         questionArea.innerHTML = `
           <div class="question-card">
             <div class="question-text">${currentState.currentQuestion.question}</div>
             ${answerHtml}
           </div>
+          ${skipBarHtml}
         `;
       }
+    }
+
+    function renderSkipVotesHtml() {
+      if (skipVoteStatus.totalPlayers === 0) return '';
+
+      const percentage = (skipVoteStatus.skipVoteCount / skipVoteStatus.votesNeeded) * 100;
+      const isActive = skipVoteStatus.skipVoteCount > 0;
+
+      return `
+        <div class="skip-vote-bar ${isActive ? 'active' : ''}">
+          <div class="skip-vote-label">Skip Categorie Stemmen</div>
+          <div class="skip-vote-progress">
+            <div class="bar">
+              <div class="fill" style="width: ${Math.min(percentage, 100)}%"></div>
+            </div>
+            <div class="count">${skipVoteStatus.skipVoteCount} / ${skipVoteStatus.votesNeeded}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderSkipVotes() {
+      // Re-render quiz to update skip vote bar
+      if (currentState && currentState.quizStarted && !currentState.isFinished) {
+        renderQuiz();
+      }
+    }
+
+    function renderCategoryDots() {
+      const dots = document.getElementById('categoryDots');
+      if (!currentState) {
+        dots.innerHTML = '';
+        return;
+      }
+
+      let html = '';
+      for (let i = 0; i < currentState.totalCategories; i++) {
+        let className = 'category-dot';
+        if (i < currentState.currentCategoryIndex) {
+          className += ' completed';
+        } else if (i === currentState.currentCategoryIndex) {
+          className += ' current';
+        }
+        html += `<div class="${className}">${i + 1}</div>`;
+      }
+      dots.innerHTML = html;
     }
 
     function renderFinished() {
@@ -333,14 +526,17 @@
 
     function renderPlayers() {
       const playerList = document.getElementById('playerList');
-      const currentQuestionId = currentState?.currentQuestion?.id;
 
       playerList.innerHTML = players.map(player => {
         const hasAnswered = player.currentAnswer !== undefined && player.currentAnswer !== null;
+        const betIcon = player.hasBetOnCurrent ? '<span class="bet-icon">2x</span>' : '';
+        const skipVote = player.hasVotedSkip ? '<span class="player-skip-vote">SKIP</span>' : '';
+
         return `
-          <li class="player-item">
-            <span class="player-name">${player.name}</span>
-            <span>
+          <li class="player-item ${player.hasBetOnCurrent ? 'has-bet' : ''}">
+            <span class="player-name">${betIcon}${player.name}</span>
+            <span class="player-status">
+              ${skipVote}
               <span class="player-score">${player.score} pts</span>
               <span class="player-answered ${hasAnswered ? 'submitted' : ''}"></span>
             </span>
