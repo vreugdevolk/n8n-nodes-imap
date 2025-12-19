@@ -2,41 +2,24 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const fs = require('fs');
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-
-// Load questions
-let quizData = { categories: [] };
-try {
-  quizData = JSON.parse(fs.readFileSync(path.join(__dirname, 'questions.json'), 'utf8'));
-} catch (e) {
-  console.log('No questions.json found, using defaults');
-  quizData = {
-    categories: [
-      {
-        id: 1,
-        name: "Algemeen",
-        questions: [
-          { id: 1, question: "Wat is de hoofdstad van Nederland?", answer: "Amsterdam" },
-          { id: 2, question: "Hoeveel is 2 + 2?", answer: "4" }
-        ]
-      }
-    ]
-  };
-}
+const VOTES_NEEDED_FOR_CATEGORY = 3;
 
 // Game state
 let gameState = {
+  phase: 'lobby', // 'lobby' | 'category-voting' | 'playing' | 'finished'
+  suggestedCategories: {}, // { categoryName: { votes: Set<playerName>, addedBy: playerName } }
+  selectedCategories: [], // Categories that made it (3+ votes) with their questions
   currentCategoryIndex: 0,
-  currentQuestionIndex: -1, // -1 means waiting to start category
+  currentQuestionIndex: -1,
   showAnswer: false,
-  players: {}, // { playerName: { answers: {}, score: 0, skipVotes: Set, bets: Set } }
-  skipVotes: new Set(), // Players who voted to skip current category
+  players: {}, // { playerName: { answers: {}, score: 0, bets: Set } }
+  skipVotes: new Set(),
   quizStarted: false
 };
 
@@ -58,10 +41,6 @@ app.get('/quiz/:playerName', (req, res) => {
 });
 
 // API endpoints
-app.get('/api/categories', (req, res) => {
-  res.json(quizData.categories.map(c => ({ id: c.id, name: c.name, questionCount: c.questions.length })));
-});
-
 app.get('/api/state', (req, res) => {
   res.json(getPublicGameState());
 });
@@ -73,6 +52,7 @@ io.on('connection', (socket) => {
   // Send current state to new connection
   socket.emit('gameState', getPublicGameState());
   socket.emit('playerUpdate', getPlayersWithScores());
+  socket.emit('categoryVotesUpdate', getCategoryVotesPublic());
 
   // Player joins
   socket.on('playerJoin', (playerName) => {
@@ -80,15 +60,112 @@ io.on('connection', (socket) => {
       gameState.players[playerName] = {
         answers: {},
         score: 0,
-        bets: new Set() // Question IDs the player is betting on
+        bets: new Set()
       };
     }
     socket.playerName = playerName;
     console.log(`Player joined: ${playerName}`);
     io.emit('playerUpdate', getPlayersWithScores());
-    // Update skip votes display when player count changes
     io.emit('skipVoteUpdate', getSkipVoteStatus());
   });
+
+  // === CATEGORY VOTING PHASE ===
+
+  // Player suggests a category - if 3 people suggest the same, it auto-adds
+  socket.on('suggestCategory', ({ playerName, categoryName }) => {
+    if (gameState.phase !== 'category-voting') return;
+    if (!categoryName || categoryName.trim().length === 0) return;
+
+    const normalizedName = categoryName.trim();
+
+    // Check if category already exists (case-insensitive)
+    const existingKey = Object.keys(gameState.suggestedCategories)
+      .find(key => key.toLowerCase() === normalizedName.toLowerCase());
+
+    if (existingKey) {
+      // Add this player to existing category
+      gameState.suggestedCategories[existingKey].suggesters.add(playerName);
+      console.log(`${playerName} also wants: ${existingKey}`);
+    } else {
+      // Create new category
+      gameState.suggestedCategories[normalizedName] = {
+        suggesters: new Set([playerName]),
+        questions: []
+      };
+      console.log(`${playerName} suggested: ${normalizedName}`);
+    }
+
+    io.emit('categoryVotesUpdate', getCategoryVotesPublic());
+    checkCategoryThreshold();
+  });
+
+  // Admin adds a question to a category
+  socket.on('addQuestion', ({ categoryName, question, answer }) => {
+    // Find category in selected or suggested
+    let category = gameState.selectedCategories.find(c => c.name === categoryName);
+    if (!category && gameState.suggestedCategories[categoryName]) {
+      category = gameState.suggestedCategories[categoryName];
+    }
+
+    if (category) {
+      const questionId = Date.now() + Math.random();
+      category.questions.push({ id: questionId, question, answer });
+      console.log(`Added question to ${categoryName}: ${question}`);
+      io.emit('categoryVotesUpdate', getCategoryVotesPublic());
+      io.emit('gameState', getPublicGameState());
+    }
+  });
+
+  // === PHASE CONTROLS ===
+
+  // Admin starts category voting phase
+  socket.on('startCategoryVoting', () => {
+    gameState.phase = 'category-voting';
+    gameState.suggestedCategories = {};
+    gameState.selectedCategories = [];
+    io.emit('gameState', getPublicGameState());
+    io.emit('categoryVotesUpdate', getCategoryVotesPublic());
+    console.log('Category voting started!');
+  });
+
+  // Admin starts the quiz (locks in categories)
+  socket.on('startQuiz', () => {
+    // Get all categories with 3+ suggesters
+    const qualifiedCategories = Object.entries(gameState.suggestedCategories)
+      .filter(([_, data]) => data.suggesters.size >= VOTES_NEEDED_FOR_CATEGORY)
+      .map(([name, data]) => ({
+        name,
+        questions: data.questions,
+        suggesters: Array.from(data.suggesters)
+      }));
+
+    if (qualifiedCategories.length === 0) {
+      socket.emit('error', { message: 'Geen categorieën met 3+ stemmen!' });
+      return;
+    }
+
+    // Filter out categories without questions
+    const categoriesWithQuestions = qualifiedCategories.filter(c => c.questions.length > 0);
+
+    if (categoriesWithQuestions.length === 0) {
+      socket.emit('error', { message: 'Geen categorieën met vragen!' });
+      return;
+    }
+
+    gameState.selectedCategories = categoriesWithQuestions;
+    gameState.phase = 'playing';
+    gameState.quizStarted = true;
+    gameState.currentCategoryIndex = 0;
+    gameState.currentQuestionIndex = 0;
+    gameState.showAnswer = false;
+    gameState.skipVotes = new Set();
+
+    io.emit('gameState', getPublicGameState());
+    io.emit('skipVoteUpdate', getSkipVoteStatus());
+    console.log(`Quiz started with ${gameState.selectedCategories.length} categories!`);
+  });
+
+  // === PLAYING PHASE ===
 
   // Player submits answer
   socket.on('submitAnswer', ({ playerName, questionId, answer }) => {
@@ -100,10 +177,10 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Player places a bet on current question
+  // Player places a bet
   socket.on('placeBet', ({ playerName }) => {
     if (gameState.players[playerName] && gameState.currentQuestionIndex >= 0) {
-      const category = quizData.categories[gameState.currentCategoryIndex];
+      const category = gameState.selectedCategories[gameState.currentCategoryIndex];
       const question = category?.questions[gameState.currentQuestionIndex];
       if (question && !gameState.showAnswer) {
         gameState.players[playerName].bets.add(question.id);
@@ -116,21 +193,19 @@ io.on('connection', (socket) => {
 
   // Player votes to skip category
   socket.on('voteSkipCategory', ({ playerName }) => {
-    if (gameState.players[playerName] && gameState.quizStarted) {
+    if (gameState.players[playerName] && gameState.phase === 'playing') {
       gameState.skipVotes.add(playerName);
       console.log(`${playerName} voted to skip category`);
 
       const skipStatus = getSkipVoteStatus();
       io.emit('skipVoteUpdate', skipStatus);
 
-      // Check if majority wants to skip
       if (skipStatus.shouldSkip) {
         skipToNextCategory();
       }
     }
   });
 
-  // Player removes skip vote
   socket.on('removeSkipVote', ({ playerName }) => {
     if (gameState.players[playerName]) {
       gameState.skipVotes.delete(playerName);
@@ -139,28 +214,15 @@ io.on('connection', (socket) => {
   });
 
   // Admin controls
-  socket.on('startQuiz', () => {
-    gameState.quizStarted = true;
-    gameState.currentCategoryIndex = 0;
-    gameState.currentQuestionIndex = 0;
-    gameState.showAnswer = false;
-    gameState.skipVotes = new Set();
-    io.emit('gameState', getPublicGameState());
-    io.emit('skipVoteUpdate', getSkipVoteStatus());
-    console.log('Quiz started!');
-  });
-
   socket.on('nextQuestion', () => {
-    const category = quizData.categories[gameState.currentCategoryIndex];
+    const category = gameState.selectedCategories[gameState.currentCategoryIndex];
     if (!category) return;
 
     if (gameState.currentQuestionIndex < category.questions.length - 1) {
       gameState.currentQuestionIndex++;
       gameState.showAnswer = false;
       io.emit('gameState', getPublicGameState());
-      console.log(`Moving to question ${gameState.currentQuestionIndex + 1}`);
     } else {
-      // Move to next category
       skipToNextCategory();
     }
   });
@@ -170,7 +232,6 @@ io.on('connection', (socket) => {
       gameState.currentQuestionIndex--;
       gameState.showAnswer = false;
       io.emit('gameState', getPublicGameState());
-      console.log(`Moving to question ${gameState.currentQuestionIndex + 1}`);
     }
   });
 
@@ -181,7 +242,6 @@ io.on('connection', (socket) => {
   socket.on('toggleAnswer', () => {
     gameState.showAnswer = !gameState.showAnswer;
     io.emit('gameState', getPublicGameState());
-    console.log(`Answer visibility: ${gameState.showAnswer}`);
   });
 
   socket.on('updateScore', ({ playerName, score }) => {
@@ -191,32 +251,21 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Award points (handles betting automatically)
   socket.on('awardPoints', ({ playerName, points, questionId }) => {
     if (gameState.players[playerName]) {
       const player = gameState.players[playerName];
       const hasBet = player.bets.has(questionId);
-
-      let actualPoints = points;
-      if (hasBet) {
-        actualPoints = points * 2; // Double points if bet
-      }
-
+      let actualPoints = hasBet ? points * 2 : points;
       player.score += actualPoints;
-      console.log(`Awarded ${actualPoints} points to ${playerName} (bet: ${hasBet})`);
       io.emit('playerUpdate', getPlayersWithScores());
     }
   });
 
-  // Deduct points for wrong bet
   socket.on('deductBetPoints', ({ playerName, points, questionId }) => {
     if (gameState.players[playerName]) {
       const player = gameState.players[playerName];
-      const hasBet = player.bets.has(questionId);
-
-      if (hasBet) {
-        player.score -= points; // Lose points if bet and wrong
-        console.log(`Deducted ${points} points from ${playerName} for wrong bet`);
+      if (player.bets.has(questionId)) {
+        player.score -= points;
         io.emit('playerUpdate', getPlayersWithScores());
       }
     }
@@ -224,6 +273,9 @@ io.on('connection', (socket) => {
 
   socket.on('resetQuiz', () => {
     gameState = {
+      phase: 'lobby',
+      suggestedCategories: {},
+      selectedCategories: [],
       currentCategoryIndex: 0,
       currentQuestionIndex: -1,
       showAnswer: false,
@@ -234,6 +286,7 @@ io.on('connection', (socket) => {
     io.emit('gameState', getPublicGameState());
     io.emit('playerUpdate', []);
     io.emit('skipVoteUpdate', getSkipVoteStatus());
+    io.emit('categoryVotesUpdate', getCategoryVotesPublic());
     console.log('Quiz reset!');
   });
 
@@ -246,17 +299,26 @@ io.on('connection', (socket) => {
   });
 });
 
+function checkCategoryThreshold() {
+  // Check if any category just reached the threshold
+  Object.entries(gameState.suggestedCategories).forEach(([name, data]) => {
+    if (data.suggesters.size === VOTES_NEEDED_FOR_CATEGORY) {
+      console.log(`Category "${name}" reached ${VOTES_NEEDED_FOR_CATEGORY} people - AUTO ADDED!`);
+      io.emit('categoryApproved', { categoryName: name });
+    }
+  });
+}
+
 function skipToNextCategory() {
-  if (gameState.currentCategoryIndex < quizData.categories.length - 1) {
+  if (gameState.currentCategoryIndex < gameState.selectedCategories.length - 1) {
     gameState.currentCategoryIndex++;
     gameState.currentQuestionIndex = 0;
     gameState.showAnswer = false;
-    gameState.skipVotes = new Set(); // Reset skip votes for new category
+    gameState.skipVotes = new Set();
     io.emit('gameState', getPublicGameState());
     io.emit('skipVoteUpdate', getSkipVoteStatus());
-    console.log(`Skipped to category ${gameState.currentCategoryIndex + 1}: ${quizData.categories[gameState.currentCategoryIndex].name}`);
   } else {
-    // Quiz finished
+    gameState.phase = 'finished';
     gameState.currentQuestionIndex = -1;
     io.emit('gameState', getPublicGameState());
     console.log('Quiz finished!');
@@ -266,7 +328,7 @@ function skipToNextCategory() {
 function getSkipVoteStatus() {
   const totalPlayers = Object.keys(gameState.players).length;
   const skipVoteCount = gameState.skipVotes.size;
-  const votesNeeded = Math.floor(totalPlayers / 2) + 1; // More than half
+  const votesNeeded = Math.floor(totalPlayers / 2) + 1;
 
   return {
     skipVoteCount,
@@ -277,15 +339,30 @@ function getSkipVoteStatus() {
   };
 }
 
+function getCategoryVotesPublic() {
+  return Object.entries(gameState.suggestedCategories).map(([name, data]) => ({
+    name,
+    suggesterCount: data.suggesters.size,
+    suggesters: Array.from(data.suggesters),
+    isApproved: data.suggesters.size >= VOTES_NEEDED_FOR_CATEGORY,
+    questionCount: data.questions.length
+  })).sort((a, b) => b.suggesterCount - a.suggesterCount);
+}
+
 function getPublicGameState() {
-  const category = quizData.categories[gameState.currentCategoryIndex];
+  const category = gameState.selectedCategories[gameState.currentCategoryIndex];
   const question = category && gameState.currentQuestionIndex >= 0
     ? category.questions[gameState.currentQuestionIndex]
     : null;
 
   return {
+    phase: gameState.phase,
     currentCategoryIndex: gameState.currentCategoryIndex,
-    currentCategory: category ? { id: category.id, name: category.name, questionCount: category.questions.length } : null,
+    currentCategory: category ? {
+      name: category.name,
+      questionCount: category.questions.length,
+      suggesters: category.suggesters
+    } : null,
     currentQuestionIndex: gameState.currentQuestionIndex,
     currentQuestion: question ? {
       id: question.id,
@@ -293,14 +370,17 @@ function getPublicGameState() {
       answer: gameState.showAnswer ? question.answer : null
     } : null,
     showAnswer: gameState.showAnswer,
-    totalCategories: quizData.categories.length,
+    totalCategories: gameState.selectedCategories.length,
     quizStarted: gameState.quizStarted,
-    isFinished: gameState.quizStarted && gameState.currentCategoryIndex >= quizData.categories.length - 1 && gameState.currentQuestionIndex < 0
+    isFinished: gameState.phase === 'finished',
+    votesNeededForCategory: VOTES_NEEDED_FOR_CATEGORY,
+    approvedCategoryCount: Object.values(gameState.suggestedCategories)
+      .filter(c => c.suggesters.size >= VOTES_NEEDED_FOR_CATEGORY).length
   };
 }
 
 function getPlayersWithScores() {
-  const category = quizData.categories[gameState.currentCategoryIndex];
+  const category = gameState.selectedCategories[gameState.currentCategoryIndex];
   const currentQuestion = category && gameState.currentQuestionIndex >= 0
     ? category.questions[gameState.currentQuestionIndex]
     : null;
@@ -320,8 +400,5 @@ server.listen(PORT, () => {
   console.log(`  Quiz display: http://localhost:${PORT}/quiz`);
   console.log(`  Admin panel:  http://localhost:${PORT}/quiz/admin`);
   console.log(`  Player join:  http://localhost:${PORT}/quiz/{name}`);
-  console.log(`\n  Categories: ${quizData.categories.length}`);
-  quizData.categories.forEach((c, i) => {
-    console.log(`    ${i + 1}. ${c.name} (${c.questions.length} questions)`);
-  });
+  console.log(`\n  Categories need ${VOTES_NEEDED_FOR_CATEGORY} votes to be included in the quiz.`);
 });
